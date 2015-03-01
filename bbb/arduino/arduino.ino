@@ -23,20 +23,47 @@ void setup() {
 
   Serial.println("Hello, World!");
   /* Initialise the IMU */
-  if(!bno.begin()) {
+  if(!bno.begin(Adafruit_BNO055::OPERATION_MODE_COMPASS)) {
     /* There was a problem detecting the BNO055 ... check your connections */
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
   }
   Serial.println("BNO begun, World!");
   bno.setExtCrystalUse(true);
+#if 0
   uint8_t syscal=0, gyrocal=0, accelcal=0, magcal=0;
   char buf[32];
   do {
     bno.getCalibration(&syscal, &gyrocal, &accelcal, &magcal);
     snprintf(buf, 32, "IMU cal: %d %d %d %d\n", syscal, gyrocal, accelcal, magcal);
-    Serial.print(buf);
+    //Serial.print(buf);
+
+    imu::Quaternion quat = bno.getQuat();
+    imu::Vector<3> euler = quat.toEuler();
+    // euler[0] and euler[2] range from [-pi, +pi].
+    // euler[1] is [-pi/2, +pi/2]
+    double roll = euler[2];
+    double pitch = euler[1];
+    double yaw = euler[0];
+    Serial.print("roll ");
+    Serial.print(roll);
+    Serial.print(" pitch ");
+    Serial.print(pitch);
+    Serial.print(" yaw ");
+    Serial.print(yaw);
+    Serial.print('\n');
+    imu::Vector<3> acc = bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
+    imu::Vector<3> mag = bno.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
+    double acc_dir = atan2(acc[1], acc[2]);
+    double mag_dir = atan2(mag[0], mag[1]);
+    //Serial.print("Acc: ");
+    //Serial.print(acc_dir);
+    //Serial.print(" Mag: ");
+    //Serial.print(mag_dir);
+    //Serial.print('\n');
+    delay(200);
     // Do while any one of the values is zero.
-  } while (!(syscal && gyrocal/* && accelcal*/ && magcal));
+  } while (!(syscal/* && gyrocal && accelcal*/ && magcal));
+#endif
 
   // The wind sensor should be pointed downwind; this will calibrate it as such.
   wind.calibrate_downwind();
