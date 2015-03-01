@@ -7,11 +7,25 @@ from gps import GPS
 from ard_int import ArduinoInterface
 from controls import get_rudder_angle, get_winch_angle
 import haversine
+from delayedbool import DelayedBool
 
 flow_pin = None
 winch_pwm = PWM1B
 rudder_pwm = PWM1A
+#List of waypoints to navigate to
 waypoints = []
+#Current goal waypoint
+goalPos = (0,0)
+
+#Boat needs to be within x meters to count as being at the waypoint
+dist_waypoint_threshold = 5
+#Boat needs to be in the threshold x times to count as being at the waypoint
+atWaypoint_heuristic = 5
+#Heuristic used to check if the boat should move to the next waypoint
+atWaypoint = DelayedBool(atWaypoint_heuristic)
+#index of the current waypoint
+currWaypointIdx = 0
+
 def setup():
 
   # XBee setup
@@ -39,7 +53,6 @@ def setup():
   arduino = ArduinoInterface(Serial1)
 
   # Waypoints setup
-  waypoints = []
   try:
     with open("waypoints") as f:
       for line in f:
@@ -47,15 +60,18 @@ def setup():
         waypoints.append((float(stringNums[0]),float(stringNums[1])))
   except:
     pass
-  print waypoints
-  delay(5000)
+  #Only set the first waypoint if there are any to travel to
+  if len(waypoints) > 0:
+    goalPos = waypoints[0]
+  else:
+    goalPos = (0,0)
 
+
+ 
 heading = 0
-goal_lat = 0
-goal_lon = 0
 m_per_deg_lat = 111000.
 m_per_deg_lon = 82500.
-
+#Middle of the football field at WPI (only used for testing)
 lat_fieldm = 42.274015
 lon_fieldm = -71.811769
 
@@ -64,12 +80,25 @@ def loop():
   global gps_reader
   global goal_lat, goal_lon
   global heading
+  global currWaypointIdx
   lat, lon = gps_reader.get_pos()
   print "Latitude, Longitude:"
   print lat, ", ", lon
-  goal_lat = lat_fieldm
-  goal_lon = lon_fieldm
-  heading = haversine.heading((lat,lon), (goal_lat, goal_lon))
+
+  goalPos = (0, 0)
+  #Ensure that the index does not go out of bounds and signify end of list
+  if currWaypointIdx < len(waypoints):
+      goalPos = waypoints[currWaypointIdx]
+  print "Waypoint: ",goalPos
+  #Check if the boat should go to the next waypoint
+  dist = haversine.distance((lat,lon), goalPos)
+  print "Distance from waypoint: ", dist
+  
+  if atWaypoint.check(dist <= dist_waypoint_threshold) and goalPos != (0,0):
+    currWaypointIdx += 1
+  
+  #Heading between the current and goal position (fixed to boat headings)
+  heading = -haversine.heading((lat,lon), goalPos)
   print "heading ", heading
   xbee_ser.prints("%f, %f\n" % (lat, lon))
 
