@@ -6,10 +6,12 @@ from motors import Rudder, Winch
 from gps import GPS
 from ard_int import ArduinoInterface
 from controls import get_rudder_angle, get_winch_angle
+import haversine
 
 flow_pin = None
 winch_pwm = PWM1B
 rudder_pwm = PWM1A
+waypoints = []
 def setup():
 
   # XBee setup
@@ -36,24 +38,39 @@ def setup():
   Serial1.begin(9600)
   arduino = ArduinoInterface(Serial1)
 
+  # Waypoints setup
+  waypoints = []
+  try:
+    with open("waypoints") as f:
+      for line in f:
+        stringNums = line.split(",")
+        waypoints.append((float(stringNums[0]),float(stringNums[1])))
+  except:
+    pass
+  print waypoints
+  delay(5000)
+
 heading = 0
 goal_lat = 0
 goal_lon = 0
 m_per_deg_lat = 111000.
 m_per_deg_lon = 82500.
+
+lat_fieldm = 42.274015
+lon_fieldm = -71.811769
+
 def loop():
   global xbee_ser
   global gps_reader
   global goal_lat, goal_lon
+  global heading
   lat, lon = gps_reader.get_pos()
   print "Latitude, Longitude:"
   print lat, ", ", lon
-  # Until lat/lon are nonzero
-  if lat != 0 and goal_lat == 0:
-    goal_lat = lat + 5. / m_per_deg_lat
-    goal_lon = lat + 5. / m_per_deg_lon
-  elif goal_lat != 0
-    heading = atan2(goal_lat / m_per_deg_lat, goal_lon / m_per_deg_lon)
+  goal_lat = lat_fieldm
+  goal_lon = lon_fieldm
+  heading = haversine.heading((lat,lon), (goal_lat, goal_lon))
+  print "heading ", heading
   xbee_ser.prints("%f, %f\n" % (lat, lon))
 
   global arduino
@@ -66,13 +83,6 @@ def loop():
   print arduino.get_pots()
 
   global winch, rudder
-  global heading
-  try:
-    with open("heading") as f:
-      heading = float(f.readline())
-  except:
-    pass
-  print "heading ", heading
   winch_val = get_winch_angle(rel_wind)
   rudder_val = get_rudder_angle(heading, yaw, rel_wind * pi / 180.)
   print "Winch, Rudder"
