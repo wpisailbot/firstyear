@@ -33,13 +33,15 @@ class GPS(object):
         self.lat = int(lat_str[0:2]) + float(lat_str[2:]) / 60.
         #Correct sign for Southern Hemisphere
         if tokens[2] == 'S':
-          self.lat *= -1.
+          self.lat *= -1
         # lon_str = dddmm.mmmmm
         lon_str = tokens[3]
-        #Correct sign for Western Hemisphere
-        if tokens[4] == 'W'
-          self.lon *= -1.
         self.lon = int(lon_str[0:3]) + float(lon_str[3:]) / 60.
+        #Correct sign for Western Hemisphere
+        print "Hemisphere: ", tokens[4]
+        if tokens[4] == 'W':
+          self.lon *= -1
+
       except: pass
       self.lock.release()
 
