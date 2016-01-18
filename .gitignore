@@ -1,0 +1,9 @@
+# Output directory
+build/
+
+# Doxygen output
+html/
+latex/
+
+# Python generated files.
+*.pyc
