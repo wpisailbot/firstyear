@@ -2,8 +2,10 @@
 #include "PPM.h"
 #include <Wire.h>
 #include <Servo.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
 #include "SerialFlow.h"
-#include "Accel.h"
+#include "util.h"
 #include "Wind.h"
 
 int compassAddress = 0x80; // From datasheet compass address is 0x42
@@ -15,12 +17,17 @@ int flw_ctl_pin = 5;
 PPM pins(2);
 SerialFlow serial(9600, flw_ctl_pin);
 Wind wind(compassAddress);
-Accel accel(1, 2, 3);
 Servo winch, rudder;
 int winch_pin, rudder_pin;
 int winch_channel = 1, rudder_channel = 2; // PPM channels. TODO: Figure out which channels to use.
 
+/* Set the delay between fresh samples */
+#define BNO055_SAMPLERATE_DELAY_MS (100)
+
+Adafruit_BNO055 bno = Adafruit_BNO055();
+
 int auto_winch = 0;
+int auto_rudder = 0;
 
 void setup() {
   serial.init();
@@ -30,8 +37,18 @@ void setup() {
   winch.attach(winch_pin, 1200, 1700);
   rudder.attach(rudder_pin, 500, 2500);
 
+  /* Initialise the IMU */
+  if(!bno.begin()) {
+    /* There was a problem detecting the BNO055 ... check your connections */
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    while(1);
+  }
+  bno.setExtCrystalUse(true);
+
   // Compass sensor setup.
-  Wire.begin();       // join i2c bus (address optional for master)
+  // Wire.begin is no longer necessary, as the BNO055 will begin it
+  // automatically.
+  //Wire.begin();       // join i2c bus (address optional for master)
   if (true) {
     // Do compass calibration.
     Wire.beginTransmission(compassAddress);
@@ -103,16 +120,20 @@ void loop() {
   serial.print(pins.getChannel(5));
   serial.print('\n');
 
-  rudder.write(pins.getChannel(rudder_channel));
-
   if (auto_winch) {
     if (reading != -1) {
       // Basically, we just say that if we are going into the wind, we pull the
       // sails all the way in; if the wind is right behind us we go all out, and
       // we vary automatically in between.
-      int abs_reading = reading;
-      //float point = (abs_reading - min_read) / (max_read - min_read);
-      //winch.write(point * 180);
+      // We will assume that the reading is such that 180=into the wind,
+      // 0/360 means we are going downwind.
+      // We now translate it so that 0=upwind, +180 = downwind.
+      int abs_reading = abs(reading - 180);
+      // We now want to map the apparent wind to some choice of winch
+      // goal. The winch should be all the way in when going near to
+      // upwind and all the way out when going straight downwind.
+      // Servo.write values range from 0 - 180.
+      winch.write(abs_reading);
     }
   } else {
     winch.write(pins.getChannel(winch_channel));
@@ -127,10 +148,35 @@ void loop() {
   }
   serial.print('\n');
 
-  serial.print("Heel: ");
-  serial.print(accel.Heel());
-  serial.print('\n');
+  // Get heel and heading information.
+  imu::Quaternion quat = bno.getQuat();
+  imu::Vector<3> euler = quat.toEuler();
+  // euler[0] and euler[2] range from [-pi, +pi].
+  // euler[1] is [-pi/2, +pi/2]
+  double roll = euler[0];
+  double pitch = euler[1];
+  double yaw = euler[2];
 
-  delay(100);
+  if (auto_rudder) {
+    double goal_heading = 0;
+    double heading_diff = angle_diff(goal_heading, yaw);
+    // Logic so that our goal heading doesn't send us into the wind.
+    // Remember, reading = 180 is into the wind.
+    double wind_reading = (double)(reading - 180) * PI / 180.;
+    double heading_wind = angle_sum(heading_diff, wind_reading);
+    double max_close_haul = PI / 6;
+    double max_head = angle_sum(wind_reading, max_close_haul);
+    double min_head = angle_diff(wind_reading, max_close_haul);
+
+    if (heading_diff > min_head && heading_wind < 0)
+      heading_diff = -max_close_haul;
+    else if (heading_diff < max_close_haul && heading_wind > 0)
+      heading_diff = max_close_haul;
+    // Now, calculate rudder angle
+    double kPrudder = 100.0;
+    rudder.write(kPrudder * heading_diff + 90);
+  } else {
+    rudder.write(pins.getChannel(rudder_channel));
+  }
 
 }
