@@ -5,7 +5,7 @@
 class Wind {
  public:
   Wind(int addr) : addr_(addr) {}
-  void init() { Wire.begin(); }
+  void init() { }
   int get_reading() {
     // step 1: instruct sensor to read echoes
     Wire.beginTransmission(addr_);
