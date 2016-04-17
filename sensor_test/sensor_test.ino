@@ -8,21 +8,23 @@
 #include "util.h"
 #include "Wind.h"
 
-int compassAddress = 0;
+int wind_port = 0;
 int reading = 0;
+
+int winch_pot_port = 1;
 
 int flw_ctl_pin = 7;
 PPM pins(2);
 SerialFlow serial(9600, flw_ctl_pin);
-Wind wind(compassAddress);
+Wind wind(wind_port);
 Servo winch, rudder;
 int winch_pin = 10, rudder_pin = 9;
 float winch_avg = 90, rudder_avg = 90;
 int winch_channel = 3, rudder_channel = 4; // PPM channels. TODO: Figure out which channels to use.
 int rudder_middle_micro = 1200;
 int rudder_range_micro = 600; // ie, rudder_middle_micro +/- rudder_range_micro/2
-int winch_middle_micro = 1450;
-int winch_range_micro = 500;
+int winch_middle_micro = 1500;
+int winch_range_micro = 600;
 int upwind_reading = 90;
 
 /* Set the delay between fresh samples */
@@ -31,16 +33,16 @@ int upwind_reading = 90;
 Adafruit_BNO055 bno = Adafruit_BNO055();
 
 int auto_winch = 1;
-int auto_rudder = 0;
+int auto_rudder = 1;
 
 void setup() {
   serial.init();
   wind.init();
   // Roughly speaking, 1700 is all the way in for the winch.
   // 1200 is all the way out (give or take).
-  winch.attach(winch_pin, 1200, 1700);
+  winch.attach(winch_pin, 1200, 1800);
   winch.writeMicroseconds(1200); // Going out is the least destructive option.
-  rudder.attach(rudder_pin, 800, 1600);
+  rudder.attach(rudder_pin);//, 800, 1600);
 
   Serial.println("Hello, World!");
   /* Initialise the IMU */
@@ -52,14 +54,12 @@ void setup() {
   bno.setExtCrystalUse(true);
   uint8_t syscal=0, gyrocal=0, accelcal=0, magcal=0;
   char buf[32];
-#if 0
   do {
     bno.getCalibration(&syscal, &gyrocal, &accelcal, &magcal);
     snprintf(buf, 32, "IMU cal: %d %d %d %d\n", syscal, gyrocal, accelcal, magcal);
     serial.print(buf);
     // Do while any one of the values is zero.
   } while (!(syscal && gyrocal && accelcal && magcal));
-#endif
   upwind_reading = wind.get_reading() - 180;
   Serial.println("Hello World");
   pinMode(12, OUTPUT);
@@ -137,7 +137,7 @@ void loop() {
       // upwind and all the way out when going straight downwind.
       int write_val = (abs_reading / 180 + 0.5) * winch_range_micro +
                       winch_middle_micro;
-      serial.print(" Winch: ");
+      serial.print("Winch: ");
       serial.print(write_val);
       serial.print('\n');
       winch.writeMicroseconds(write_val);
@@ -160,11 +160,7 @@ void loop() {
 
   // Do wind sensor stuff.
   reading = wind.get_reading();
-  if (reading != -1) {
-    serial.print(reading); // print the reading
-  } else {
-    serial.print("Data not available");
-  }
+  serial.print(reading); // print the wind reading
   serial.print('\n');
 
   // Get heel and heading information.
@@ -175,13 +171,15 @@ void loop() {
   double roll = euler[2];
   double pitch = euler[1];
   double yaw = euler[0];
+  serial.print("roll ");
   serial.print(roll);
-  serial.print("\t");
+  serial.print(" yaw\t");
   serial.print(yaw);
   serial.print('\n');
 
+  static double goal_heading = 0;
   if (auto_rudder == 1) {
-    double goal_heading = 0;
+    goal_heading += (pins.getChannel(rudder_channel) - 90) / 20.;
     double heading_diff = angle_diff(goal_heading, yaw);
     // Logic so that our goal heading doesn't send us into the wind.
     // Remember, reading = 180 is into the wind.
@@ -196,20 +194,37 @@ void loop() {
     else if (heading_diff < max_close_haul && heading_wind > 0)
       heading_diff = max_close_haul;
     // Now, calculate rudder angle
-    double kPrudder = 100.0;
-    //rudder.write(kPrudder * heading_diff + 90);
+    double kPrudder = 20.0;
+    int write_val = kPrudder * heading_diff + 90;
+    rudder.write(write_val);
+    serial.print("Heading: ");
+    serial.print(goal_heading);
+    serial.print(" Rudder: ");
+    serial.print(write_val);
+    serial.print('\n');
   } else {
     int reading = pins.getChannel(rudder_channel);
     if (reading >= 0 && reading < 195) {
       if (reading > 180) reading = 180;
       reading = constrain(reading, rudder_avg - 8, rudder_avg + 8);
       rudder_avg = (float)rudder_avg * .7 + (float)reading * .3;
-      int write_val = (rudder_avg - 90.) / 180. * rudder_range_micro + rudder_middle_micro;
-      rudder.writeMicroseconds(write_val);
+      int write_val = rudder_avg;//(rudder_avg - 90.) / 180. * rudder_range_micro + rudder_middle_micro;
+      rudder.write(write_val);
+      //rudder.writeMicroseconds(write_val);
+      serial.print("Heading: ");
+      serial.print(reading);
+      serial.print(" Rudder: ");
+      serial.print(reading);
+      serial.print('\n');
       //Serial.println(write_val);
       //rudder.write(90);
     }
   }
+
+  // Print out winch and rudder pots.
+  serial.print("W pot: ");
+  serial.print(analogRead(winch_pot_port));
+  serial.print('\n');
 
   delay(20);
 
