@@ -8,12 +8,10 @@
 #include "util.h"
 #include "Wind.h"
 
-int compassAddress = 0x80; // From datasheet compass address is 0x42
-// shift the address 1 bit right, the Wire library only needs the 7
-// most significant bits for the address
+int compassAddress = 0;
 int reading = 0;
 
-int flw_ctl_pin = 2;
+int flw_ctl_pin = 7;
 PPM pins(2);
 SerialFlow serial(9600, flw_ctl_pin);
 Wind wind(compassAddress);
@@ -32,7 +30,7 @@ int upwind_reading = 90;
 
 Adafruit_BNO055 bno = Adafruit_BNO055();
 
-int auto_winch = 0;
+int auto_winch = 1;
 int auto_rudder = 0;
 
 void setup() {
@@ -46,33 +44,22 @@ void setup() {
 
   Serial.println("Hello, World!");
   /* Initialise the IMU */
-  //if(!bno.begin()) {
+  if(!bno.begin()) {
     /* There was a problem detecting the BNO055 ... check your connections */
-  //  Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-  //}
-  //Serial.println("BNO begun, World!");
-  //bno.setExtCrystalUse(true);
-  // Compass sensor setup.
-  // Wire.begin is no longer necessary, as the BNO055 will begin it
-  // automatically.
-  Wire.begin();       // join i2c bus (address optional for master)
-  if (1 == 1) {
-    Serial.println("Doing compass calibration\n.");
-    // Do compass calibration.
-    Wire.beginTransmission(compassAddress);
-    Wire.write('C');
-    Wire.endTransmission();
-    for (int i = 0; i < 25; ++i) {
-    Serial.println("Doing compass calibration\n.");
-      Serial.println(i);
-      delay(1000);
-    }
-    Wire.beginTransmission(compassAddress);
-    Wire.write('E');
-    Wire.endTransmission();
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
   }
-  // When the calibration is done, the user should set the
-  // wind vane to its downwind position.
+  Serial.println("BNO begun, World!");
+  bno.setExtCrystalUse(true);
+  uint8_t syscal=0, gyrocal=0, accelcal=0, magcal=0;
+  char buf[32];
+#if 0
+  do {
+    bno.getCalibration(&syscal, &gyrocal, &accelcal, &magcal);
+    snprintf(buf, 32, "IMU cal: %d %d %d %d\n", syscal, gyrocal, accelcal, magcal);
+    serial.print(buf);
+    // Do while any one of the values is zero.
+  } while (!(syscal && gyrocal && accelcal && magcal));
+#endif
   upwind_reading = wind.get_reading() - 180;
   Serial.println("Hello World");
   pinMode(12, OUTPUT);
@@ -99,19 +86,22 @@ void print_gps() {
         up_index = true;
         ind = 0;
       }
-      if (ind == 5) {
+      //for (int i = 0; i < ind; ++i) serial.print(buf[i]);
+      if (ind == 6) {
+        serial.print('\n');
         if(strncmp(buf, "$GPRMC", 6)) {
           // Strings are different; retry.
           ind = 0;
           up_index = false;
         }
       }
+      if (chr == '\r' && !Serial.available()) break;
       buf[ind] = char(chr);
       if (up_index) ++ind;
-      if (chr == '\n' && !Serial.available()) break;
     }
   }
-  if (ind) serial.write(buf, ind);
+  for (int i = 0; i < ind; ++i) serial.print(buf[i]);
+  if (ind != 0) serial.print('\n');
 }
 
 void loop() {
@@ -153,11 +143,11 @@ void loop() {
       winch.writeMicroseconds(write_val);
     }
   } else {
-    int reading = pins.getChannel(winch_channel);
-    if (reading >= 0 && reading < 195) {
-      if (reading > 180) reading = 180;
-      reading = constrain(reading, winch_avg - 8, winch_avg + 8);
-      winch_avg = (float)winch_avg * .7 + (float)reading * .3;
+    int winch_cmd = pins.getChannel(winch_channel);
+    if (winch_cmd >= 0 && winch_cmd < 195) {
+      if (winch_cmd > 180) winch_cmd = 180;
+      winch_cmd = constrain(winch_cmd, winch_avg - 8, winch_avg + 8);
+      winch_avg = (float)winch_avg * .7 + (float)winch_cmd * .3;
       int write_val = (winch_avg - 90.) / 180. * winch_range_micro + winch_middle_micro;
       winch.writeMicroseconds(write_val);
       serial.print("Winch: ");
@@ -182,9 +172,9 @@ void loop() {
   imu::Vector<3> euler = quat.toEuler();
   // euler[0] and euler[2] range from [-pi, +pi].
   // euler[1] is [-pi/2, +pi/2]
-  double roll = euler[0];
+  double roll = euler[2];
   double pitch = euler[1];
-  double yaw = euler[2];
+  double yaw = euler[0];
   serial.print(roll);
   serial.print("\t");
   serial.print(yaw);

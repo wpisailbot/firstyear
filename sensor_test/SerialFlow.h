@@ -26,12 +26,6 @@ class SerialFlow {
     while (!cts()) continue;
     Serial.print(data);
   }
-  void write(const char *buf, int n) {
-    for (int i = 0; i < n; ++i) {
-      while (!cts()) continue;
-      Serial.write(buf[n]);
-    }
-  }
  private:
   const int flow_pin_;
   const int baud_;
