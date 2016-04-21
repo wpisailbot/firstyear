@@ -7,6 +7,7 @@
 #include "SerialFlow.h"
 #include "util.h"
 #include "Wind.h"
+#include "controls.h"
 
 int wind_port = 0;
 int reading = 0;
@@ -25,7 +26,6 @@ int rudder_middle_micro = 1200;
 int rudder_range_micro = 600; // ie, rudder_middle_micro +/- rudder_range_micro/2
 int winch_middle_micro = 1500;
 int winch_range_micro = 600;
-int upwind_reading = 90;
 
 /* Set the delay between fresh samples */
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -60,7 +60,10 @@ void setup() {
     serial.print(buf);
     // Do while any one of the values is zero.
   } while (!(syscal && gyrocal && accelcal && magcal));
-  upwind_reading = wind.get_reading() - 180;
+
+  // The wind sensor should be pointed downwind; this will calibrate it as such.
+  wind.calibrate_downwind();
+
   Serial.println("Hello World");
   pinMode(12, OUTPUT);
   pinMode(13, OUTPUT);
@@ -130,7 +133,7 @@ void loop() {
       // sails all the way in; if the wind is right behind us we go all out, and
       // we vary automatically in between.
       // We now translate it so that 0=upwind, +180 = downwind.
-      float abs_reading = angle_diff_deg(reading, upwind_reading);
+      float abs_reading = reading;
       abs_reading = -abs(abs_reading);
       // We now want to map the apparent wind to some choice of winch
       // goal. The winch should be all the way in when going near to
@@ -179,23 +182,13 @@ void loop() {
 
   static double goal_heading = 0;
   if (auto_rudder == 1) {
-    goal_heading += (pins.getChannel(rudder_channel) - 90) / 20.;
-    double heading_diff = angle_diff(goal_heading, yaw);
-    // Logic so that our goal heading doesn't send us into the wind.
-    // Remember, reading = 180 is into the wind.
-    double wind_reading = (double)(reading - 180) * PI / 180.;
-    double heading_wind = angle_sum(heading_diff, wind_reading);
-    double max_close_haul = PI / 6;
-    double max_head = angle_sum(wind_reading, max_close_haul);
-    double min_head = angle_diff(wind_reading, max_close_haul);
-
-    if (heading_diff > min_head && heading_wind < 0)
-      heading_diff = -max_close_haul;
-    else if (heading_diff < max_close_haul && heading_wind > 0)
-      heading_diff = max_close_haul;
-    // Now, calculate rudder angle
-    double kPrudder = 20.0;
-    int write_val = kPrudder * heading_diff + 90;
+    // TODO: Confirm that goal_heading, yaw, and rel_wind are actually the
+    // correct handedness.
+    // Currently, the basic way this should work is that if the boat is sailing,
+    // say, N, then yaw=0; if the boat is going W, yaw=+PI/2, etc. The heading
+    // is the same. For the wind, if the boat is going upwind, it should be 0.
+    // if the wind is coming in from port, rel_wind=+PI/2.
+    int write_val = get_rudder_angle(goal_heading, yaw, reading * PI / 180.);
     rudder.write(write_val);
     serial.print("Heading: ");
     serial.print(goal_heading);

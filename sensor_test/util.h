@@ -1,5 +1,8 @@
 #pragma once
 #include <math.h>
+#ifndef PI
+#define PI 3.1415926536
+#endif
 
 double angle_sum(double t1, double t2) {
   double sum = t1 + t2;
