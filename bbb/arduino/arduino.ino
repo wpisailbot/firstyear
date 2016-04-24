@@ -6,8 +6,8 @@
 #include <utility/imumaths.h>
 #include "Wind.h"
 
-int wind_port = 0;
-int winch_pot = 1, rudder_pot = 2;
+int wind_port = 2;
+int winch_pot = 3, rudder_pot = 1;
 
 PPM pins(2);
 Wind wind(wind_port);
@@ -36,7 +36,7 @@ void setup() {
     snprintf(buf, 32, "IMU cal: %d %d %d %d\n", syscal, gyrocal, accelcal, magcal);
     Serial.print(buf);
     // Do while any one of the values is zero.
-  } while (!(syscal && gyrocal && accelcal && magcal));
+  } while (!(syscal && gyrocal/* && accelcal*/ && magcal));
 
   // The wind sensor should be pointed downwind; this will calibrate it as such.
   wind.calibrate_downwind();

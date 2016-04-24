@@ -23,8 +23,8 @@ def get_rudder_angle(goal_heading, yaw, rel_wind):
   elif heading_diff < max_head_diff and heading_wind > 0:
     heading_diff = max_head_diff
 
-  kPrudder = 20.
-  return kPrudder * heading_diff + 90
+  kPrudder = 80.
+  return kPrudder * -heading_diff + 90
 
 def get_winch_angle(rel_wind):
   """

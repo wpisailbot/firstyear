@@ -1,0 +1,24 @@
+Latitude, Longitude:
+0 ,  0
+Latitude, Longitude:
+0 ,  0
+Latitude, Longitude:
+0 ,  0
+Unhandled exception in thread started by <bound method ArduinoInterface.run of <ard_int.ArduinoInterface object at 0xb6b22f90>>
+Traceback (most recent call last):
+  File "/home/debian/sailbot/bbb/py/ard_int.py", line 27, in run
+    if self.ser.available(): buf += self.ser.read()
+  File "/usr/local/lib/python2.7/dist-packages/PyBBIO-0.9.3-py2.7-linux-armv7l.egg/bbio/platform/beaglebone/serial_port.py", line 78, in read
+Unhandled exception in thread started by <bound method GPS.run of <gps.GPS object at 0xb6b22e30>>
+Traceback (most recent call last):
+  File "/home/debian/sailbot/bbb/py/gps.py", line 23, in run
+    if self.ser.available(): buf += self.ser.read()
+  File "/usr/local/lib/python2.7/dist-packages/PyBBIO-0.9.3-py2.7-linux-armv7l.egg/bbio/platform/beaglebone/serial_port.py", line 70, in available
+    return self.ser_port.inWaiting() + len(self.peek_char)
+  File "/usr/lib/python2.7/dist-packages/serial/serialposix.py", line 431, in inWaiting
+        byte = self.ser_port.read(1)
+  File "/usr/lib/python2.7/dist-packages/serial/serialposix.py", line 449, in read
+s = fcntl.ioctl(self.fd, TIOCINQ, TIOCM_zero_str)
+IOError: [Errno 9] Bad file descriptor
+    buf = os.read(self.fd, size-len(read))
+OSError: [Errno 9] Bad file descriptor
