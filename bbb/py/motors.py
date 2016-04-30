@@ -3,7 +3,7 @@ from bbio.libraries.Servo import *
 
 class Winch(object):
   def __init__(self, winch_port):
-    self.winch = Servo(winch_port, min_ms=1.2, max_ms=1.7)
+    self.winch = Servo(winch_port, min_ms=1.2, max_ms=1.8)
 
   def set(self, val):
     self.winch.write(val)

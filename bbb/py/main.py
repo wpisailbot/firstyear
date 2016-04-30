@@ -55,6 +55,12 @@ def loop():
 
   global winch, rudder
   heading = 0
+  try:
+    with open("heading") as f:
+      heading = float(f.readline())
+  except:
+    pass
+  print "heading ", heading
   winch_val = get_winch_angle(rel_wind)
   rudder_val = get_rudder_angle(heading, yaw, rel_wind * pi / 180.)
   print "Winch, Rudder"
