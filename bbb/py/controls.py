@@ -18,10 +18,19 @@ def get_rudder_angle(goal_heading, yaw, rel_wind):
   max_head_diff = angle_sum(rel_wind, max_close_haul)
   min_head_diff = angle_diff(rel_wind, max_close_haul)
 
-  if heading_diff > min_head_diff and heading_wind <= 0:
+  #print "heading_diff, heading_wind, max_diff, min_diff"
+  #print heading_diff
+  #print heading_wind
+  #print min_head_diff
+  #print max_head_diff
+
+  if angle_diff(heading_diff, min_head_diff) > 0 and heading_wind <= 0:
     heading_diff = min_head_diff
-  elif heading_diff < max_head_diff and heading_wind > 0:
+  elif angle_diff(heading_diff, max_head_diff) < 0 and heading_wind > 0:
     heading_diff = max_head_diff
+  #print "New heading"
+  #print heading_diff
+
 
   kPrudder = 20.
   return kPrudder * -heading_diff + 90

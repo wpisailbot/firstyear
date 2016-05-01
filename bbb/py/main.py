@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from bbio import *
-from math import pi
+from math import pi, atan2
 from serial_flow import SerialFlow
 from motors import Rudder, Winch
 from gps import GPS
@@ -36,12 +36,24 @@ def setup():
   Serial1.begin(9600)
   arduino = ArduinoInterface(Serial1)
 
+heading = 0
+goal_lat = 0
+goal_lon = 0
+m_per_deg_lat = 111000.
+m_per_deg_lon = 82500.
 def loop():
   global xbee_ser
   global gps_reader
+  global goal_lat, goal_lon
   lat, lon = gps_reader.get_pos()
   print "Latitude, Longitude:"
   print lat, ", ", lon
+  # Until lat/lon are nonzero
+  if lat != 0 and goal_lat == 0:
+    goal_lat = lat + 5. / m_per_deg_lat
+    goal_lon = lat + 5. / m_per_deg_lon
+  elif goal_lat != 0
+    heading = atan2(goal_lat / m_per_deg_lat, goal_lon / m_per_deg_lon)
   xbee_ser.prints("%f, %f\n" % (lat, lon))
 
   global arduino
@@ -54,7 +66,7 @@ def loop():
   print arduino.get_pots()
 
   global winch, rudder
-  heading = 0
+  global heading
   try:
     with open("heading") as f:
       heading = float(f.readline())
