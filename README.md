@@ -1,6 +1,6 @@
 There is no longer any useful code outside of the `bbb/` folder.
 
-###Usage
+#Usage
 
 Basically all commands must be run as root in order to access the
 IO devices.
@@ -26,7 +26,7 @@ In order to run the BBB code, go to `bbb/py` and run `sudo ./main.py`.
 The main python code does not run by default when the BBB starts up.
 Someone should make it do that.
 
-###File Locations on BBB
+#File Locations on BBB
 
 ##Wireless
 
@@ -59,7 +59,7 @@ The git repository is checked out at `/home/debian/sailbot`. Whenever I've worke
 
 ##I/O
 
-#Serial ports
+###Serial ports
 
 Serial ports are located at `/dev/ttyO1`, `/dev/ttyO2`, `/dev/ttyO4`, etc.
 Strictly speaking, you should never need to access these directly if you are just using the python code. However, you may need to access them if you are debugging stuff.
@@ -70,7 +70,7 @@ If the serial port does not exist in `/dev`, then it needs to be added. This can
 
 To make a serial port startup by default, then edit `/boot/uEnv.txt`; there is already a line for `/dev/ttyO1`, and you can do the same thing for other ports (I have not poked at this all that much).
 
-#GPIO
+###GPIO
 
 GPIO pins can be manually controlled through the device tree as follows:
 
