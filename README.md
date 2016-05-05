@@ -83,15 +83,19 @@ By the way, the GPIOs are split into sets of 32. This means that GPIO60 is also 
 ## BeagleBoneBlack
 
 [Home Page](https://beagleboard.org/black): Contains useful links to vearious places.
+
 [Latest Hardware Documentation](http://elinux.org/Beagleboard:BeagleBoneBlack#LATEST_PRODUCTION_FILES_.28C.29): Schematics, System Reference Manual, etc. Useful for checking what connects to what pinouts, or trying to figure out which pin names correspond to which things.
+
 [Wiki](http://elinux.org/Beagleboard:BeagleBoneBlack): General useful information.
 
 ## XBee
 [Datasheet](https://www.sparkfun.com/datasheets/Wireless/Zigbee/XBee-2.5-Manual.pdf): This is the datasheet for the precise version of the XBees that we are using. The 1.2xx (End device, transparent operation) firmware is installed on the boat. Other XBees have other versions installed (the one connected to the USB shield that I've been using has the coordinator transparent operation installed on it).
+
 [Cape Schematic](https://raw.githubusercontent.com/lgxlogic/CBB-XBEE/master/CBB-XBEE-sch.png): The schematic for the cape that we are using for the XBee on the BBB (the Cape only gets power if the BBB is being powered from the battery or wall power.
 
 ## IMU (BNO055)
 [Datasheet](https://cdn-shop.adafruit.com/datasheets/BST_BNO055_DS000_12.pdf): Contains information on what the different modes do, how calibration works, etc. Informative, although we do not need to worry about the minutiae so long as we are using Adafruit's libraries.
+
 [Adafruit Page](https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/overview): The Adafruit page for the BNO055.
 
 ## GPS
