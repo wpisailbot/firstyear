@@ -32,7 +32,7 @@ Someone should make it do that.
 
 The network configuration is stored in `/etc/network/interfaces`. The only lines that affect the wireless interface network are the ones on and following `iface wlan0 inet static`. My machine happens to create an access point that uses the 10.42.0 subnet, but your computer may do something else (and it will certainly have a different SSID and key).
 
-The network configuration should get run at startup, by running `/home/debian/bin/start_wireless.sh'. In theory, the only line of that script that should be necessary is `/sbin/ifup wlan0`, but I was running into issues and have to wait a bit and run `iwconfig` separately (note: This forces you to write in the SSID and key for the network both in `/etc/network/interfaces` and in this file). I know that there were some other issues that I've fixed since then, so it is possible that it is no longer necessary.
+The network configuration should get run at startup, by running `/home/debian/bin/start_wireless.sh`. In theory, the only line of that script that should be necessary is `/sbin/ifup wlan0`, but I was running into issues and have to wait a bit and run `iwconfig` separately (note: This forces you to write in the SSID and key for the network both in `/etc/network/interfaces` and in this file). I know that there were some other issues that I've fixed since then, so it is possible that it is no longer necessary.
 
 For whatever reason, I've also found that in general the beaglebone can not ping my computer until I have pinged the beaglebone with my computer. I haven't investigated why, and that may have been transient.
 
@@ -75,3 +75,24 @@ To make a serial port startup by default, then edit `/boot/uEnv.txt`; there is a
 GPIO pins can be manually controlled through the device tree as follows:
 
 To enable a pin (say, 60), do `echo 60 > /sys/class/gpio/export` as root. The directory `/sys/class/gpio/gpio60/` will then be created and you can manipulate the settings and behavior of the pin by reading/writing from various files (you can read more about this on the internet).
+
+By the way, the GPIOs are split into sets of 32. This means that GPIO60 is also GPIO1.28 (1 * 32 + 28 = 60), and the different conventions are used in different places and you have to be able to convert between them.
+
+#External Links
+
+## BeagleBoneBlack
+
+[Home Page](https://beagleboard.org/black): Contains useful links to vearious places.
+[Latest Hardware Documentation](http://elinux.org/Beagleboard:BeagleBoneBlack#LATEST_PRODUCTION_FILES_.28C.29): Schematics, System Reference Manual, etc. Useful for checking what connects to what pinouts, or trying to figure out which pin names correspond to which things.
+[Wiki](http://elinux.org/Beagleboard:BeagleBoneBlack): General useful information.
+
+## XBee
+[Datasheet](https://www.sparkfun.com/datasheets/Wireless/Zigbee/XBee-2.5-Manual.pdf): This is the datasheet for the precise version of the XBees that we are using. The 1.2xx (End device, transparent operation) firmware is installed on the boat. Other XBees have other versions installed (the one connected to the USB shield that I've been using has the coordinator transparent operation installed on it).
+[Cape Schematic](https://raw.githubusercontent.com/lgxlogic/CBB-XBEE/master/CBB-XBEE-sch.png): The schematic for the cape that we are using for the XBee on the BBB (the Cape only gets power if the BBB is being powered from the battery or wall power.
+
+## IMU (BNO055)
+[Datasheet](https://cdn-shop.adafruit.com/datasheets/BST_BNO055_DS000_12.pdf): Contains information on what the different modes do, how calibration works, etc. Informative, although we do not need to worry about the minutiae so long as we are using Adafruit's libraries.
+[Adafruit Page](https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/overview): The Adafruit page for the BNO055.
+
+## GPS
+[Datasheet](http://cdn.sparkfun.com/datasheets/Sensors/GPS/GP-635T-121130.pdf)
