@@ -1,5 +1,7 @@
 from bbio import *
 import thread
+from util import angle_sum
+from math import pi
 
 class ArduinoInterface(object):
   def __init__(self, ser):
@@ -68,7 +70,8 @@ class ArduinoInterface(object):
     yaw = 0
     self.lock.acquire()
     roll = self.roll
-    yaw = self.yaw
+    #compensate for IMU mounting
+    yaw = angle_sum(self.yaw, pi/2)
     self.lock.release()
     return roll, yaw
 
