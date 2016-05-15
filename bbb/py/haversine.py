@@ -2,11 +2,9 @@ import math
 
 earth_radius = 6371000 #Radius of the earth in meters
 
+#Returns the straight-line distance around the earth between two points.
+#Returns the distance in meters
 def distance(fromLoc, toLoc):
-  #enforce that from and to are a list or tuple with 2 elements (lat, long)
-  #if (len(fromLoc) != 2) or (len(toLoc) != 2):
-    #throw exception
-
   lat1 = math.radians(fromLoc[0])
   lat2 = math.radians(toLoc[0])
   deltaLat = math.radians(toLoc[0]-fromLoc[0])
