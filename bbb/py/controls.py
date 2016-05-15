@@ -14,7 +14,7 @@ def get_rudder_angle(goal_heading, yaw, rel_wind):
   """
   heading_diff = angle_diff(goal_heading, yaw)
   heading_wind = angle_diff(heading_diff, rel_wind)
-  max_close_haul = pi / 4
+  max_close_haul = pi / 3
   max_head_diff = angle_sum(rel_wind, max_close_haul)
   min_head_diff = angle_diff(rel_wind, max_close_haul)
 
@@ -32,7 +32,7 @@ def get_rudder_angle(goal_heading, yaw, rel_wind):
   #print heading_diff
 
 
-  kPrudder = 20.
+  kPrudder = 15.
   return kPrudder * -heading_diff + 90
 
 def get_winch_angle(rel_wind):
@@ -42,4 +42,6 @@ def get_winch_angle(rel_wind):
     returns:
       winch value to write (0-180). 0 = all the way out, 180=all in.
   """
-  return 180-abs(rel_wind)
+  return 180-abs(rel_wind)-10
+
+
