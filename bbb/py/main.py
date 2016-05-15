@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from bbio import *
-from math import pi, atan2
+from math import pi, atan2, degrees
 from serial_flow import SerialFlow
 from motors import Rudder, Winch
 from gps import GPS
@@ -92,14 +92,14 @@ def loop():
   print "Waypoint: ",goalPos
   #Check if the boat should go to the next waypoint
   dist = haversine.distance((lat,lon), goalPos)
-  print "Distance from waypoint: ", dist
+  print "Distance from wpt (m): ", dist
   
   if atWaypoint.check(dist <= dist_waypoint_threshold) and goalPos != (0,0):
     currWaypointIdx += 1
   
   #Heading between the current and goal position (fixed to boat headings)
   heading = -haversine.heading((lat,lon), goalPos)
-  print "heading ", heading
+  print "Heading to wpt (deg): ", degrees(heading)
   xbee_ser.prints("%f, %f\n" % (lat, lon))
 
   global arduino
