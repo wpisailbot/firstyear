@@ -38,7 +38,6 @@ class GPS(object):
         lon_str = tokens[3]
         self.lon = int(lon_str[0:3]) + float(lon_str[3:]) / 60.
         #Correct sign for Western Hemisphere
-        print "Hemisphere: ", tokens[4]
         if tokens[4] == 'W':
           self.lon *= -1
 
