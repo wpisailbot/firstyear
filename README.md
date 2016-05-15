@@ -26,7 +26,14 @@ In order to run the BBB code, go to `bbb/py` and run `sudo ./main.py`.
 The main python code does not run by default when the BBB starts up.
 Someone should make it do that.
 
-#File Locations on BBB
+###Startup Procedure
+1:  Power on the Beagle Bone
+2:  Calibrate the IMU
+    (Open a terminal to view the calibration status.  Calibrated when it
+     starts dumping a whole bunch of text to the terminal)
+3:  Do the rest of the boat setup stuff
+
+###File Locations on BBB
 
 ##Wireless
 
@@ -100,3 +107,6 @@ By the way, the GPIOs are split into sets of 32. This means that GPIO60 is also 
 
 ## GPS
 [Datasheet](http://cdn.sparkfun.com/datasheets/Sensors/GPS/GP-635T-121130.pdf)
+
+#Wayoints
+The main.py program will navigate to the list of waypoints in the file "waypoints". Each waypoint in the file needs to have the lattitude and longitude separated by a comma, and each waypoint needs to be separated by a newline.  To add a waypoint, just manually edit the data in "waypoints", or execute "WaypointCreator".  WaypointCreator needs no arguments, and will take 5 samples from the gps, average the samples, and then append the current position to the "waypoints" file.  The script will throw exceptions at the end when it has finished, but these are expected since I (Jordan) don't know how to properly shutdown the gps thread.  These exceptions do not affect the program from operating correctly.
