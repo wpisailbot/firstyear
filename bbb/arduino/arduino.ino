@@ -29,13 +29,13 @@ void setup() {
   }
   Serial.println("BNO begun, World!");
   bno.setExtCrystalUse(true);
-#if 0
+#if 1
   uint8_t syscal=0, gyrocal=0, accelcal=0, magcal=0;
   char buf[32];
   do {
     bno.getCalibration(&syscal, &gyrocal, &accelcal, &magcal);
     snprintf(buf, 32, "IMU cal: %d %d %d %d\n", syscal, gyrocal, accelcal, magcal);
-    //Serial.print(buf);
+    Serial.print(buf);
 
     imu::Quaternion quat = bno.getQuat();
     imu::Vector<3> euler = quat.toEuler();
