@@ -1,0 +1,50 @@
+#!/usr/bin/python
+from bbio import *
+from gps import GPS
+
+num_samples = 5
+waypointfile = 'waypoints'
+
+def setup():
+  #Initialize the connection to the GPS
+  global gps_reader
+  Serial4.begin(9600)
+  gps_reader = GPS(Serial4)
+
+  #Wait for the GPS to lock unless the user has overridden this behavior
+  #while gps_reader.get_pos() == (0,0):
+  #  print 'Waiting for GPS lock'
+  #  delay(1000)
+  
+  #throw away a few of the early samples to get rid of zeros
+  for i in range(0,5):
+    gps_reader.get_pos()
+    delay(500)
+
+  samples = []
+  #Get 5 samples of the current position
+  for i in range(0,num_samples):
+    pos = gps_reader.get_pos()
+    samples.append(pos)
+    print "Sample ",(i+1),": ",pos
+    delay(1000)
+
+  #Average the values
+  latSum = 0
+  lonSum = 0
+  for sample in samples:
+    latSum += sample[0]
+    lonSum += sample[1]
+  latAvg = latSum / num_samples
+  lonAvg = lonSum / num_samples
+  print "Lat: ",latAvg," Lon: ",lonAvg
+  
+  #Add the current position to the waypoints list
+  with open('waypoints', 'a') as f:
+    f.write(str(latAvg)+','+str(lonAvg)+'\n')
+  print "Wrote data to waypoint file"
+
+def loop():
+  exit()
+
+run(setup,loop) 
